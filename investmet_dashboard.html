@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Financial Advisor Dashboard</title>
+    <style>
+        :root {
+            --primary-color: #0d47a1; --secondary-color: #1976d2; --accent-color: #ffc107;
+            --background-color: #f4f5f7; --text-color: #212529; --container-bg: #ffffff;
+            --border-radius: 12px; --box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: var(--background-color); color: var(--text-color); line-height: 1.6; }
+        .container { background-color: var(--container-bg); padding: 2.5rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); width: 100%; max-width: 1000px; margin: 2rem auto; }
+        h1, h2, h3 { color: var(--primary-color); text-align: center; }
+        h1 { font-size: 2.4rem; margin-bottom: 0.5rem;}
+        .subtitle { text-align: center; color: var(--secondary-color); margin-bottom: 2rem; font-size: 1.1rem; }
+        h2 { border-bottom: 2px solid var(--secondary-color); padding-bottom: 10px; margin-top: 2.5rem; }
+        fieldset { border: 1px solid #dee2e6; border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 1.5rem; }
+        legend { font-size: 1.2rem; font-weight: 600; color: var(--primary-color); padding: 0 10px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem 2rem; }
+        label { font-weight: 500; margin-bottom: 5px; display: inline-flex; align-items: center; }
+        input[type="number"], select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ced4da; font-size: 1rem; box-sizing: border-box; margin-top: 4px; }
+        .main-button { display: block; width: 100%; background-color: var(--secondary-color); color: white; border: none; padding: 15px; font-size: 1.2rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background-color 0.3s ease; margin-top: 2rem; }
+        .main-button:hover { background-color: var(--primary-color); }
+        
+        #reportSection { display: none; }
+        
+        /* FIX 1: Responsive 2x2 Grid for Investment Plan */
+        .investment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 768px) {
+            .investment-grid { grid-template-columns: 1fr; }
+        }
+
+        .plan-card { background-color: #f8f9fa; border-left: 5px solid; border-radius: var(--border-radius); padding: 1.5rem; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .plan-card.liquidity { border-color: #42a5f5; } .plan-card.growth { border-color: #66bb6a; }
+        .plan-card.equity { border-color: #ffa726; } .plan-card.retirement { border-color: #ab47bc; }
+        
+        .card-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .card-header .card-icon { font-size: 2.5rem; margin-right: 1rem; }
+        .card-header h3 { margin: 0; text-align: left; font-size: 1.3rem; }
+        .card-body .primary-amount { font-size: 2rem; font-weight: bold; color: var(--primary-color); margin-bottom: 0.25rem; }
+        .card-body .allocation-percent { font-size: 1rem; color: #555; margin-bottom: 1rem; font-weight: 500;}
+        .card-body p { margin: 0.5rem 0; }
+        
+        #taxVerdict { padding: 1rem; text-align: center; font-size: 1.2rem; font-weight: bold; border-radius: var(--border-radius); margin-bottom: 2rem; }
+        #priorityInvestments { background-color: #fffde7; border: 1px solid var(--accent-color); padding: 1.5rem; border-radius: var(--border-radius); margin-bottom: 2rem;}
+        
+        /* FIX 2: Corpus Projection Styles */
+        #corpusProjection { grid-column: 1 / -1; margin-top: 1.5rem; background-color: #e3f2fd; border: 1px solid #90caf9; padding: 1.5rem; border-radius: var(--border-radius);}
+        .chart-container { display: flex; justify-content: space-around; align-items: flex-end; height: 200px; border-bottom: 2px solid var(--primary-color); padding: 10px 0; }
+        .chart-bar { width: 15%; background-color: var(--secondary-color); text-align: center; color: white; position: relative; transition: height 0.5s ease-out; border-radius: 4px 4px 0 0;}
+        .chart-bar .year-label { position: absolute; bottom: -25px; width: 100%; text-align: center; color: var(--primary-color); font-size: 0.9rem;}
+        .chart-bar .value-label { position: absolute; top: -25px; width: 100%; text-align: center; color: var(--primary-color); font-weight: bold; font-size: 0.9rem;}
+
+
+        /* Tooltip Styles */
+        .info-tip { position: relative; cursor: pointer; margin-left: 8px; color: var(--secondary-color); font-weight: bold; border: 1px solid var(--secondary-color); border-radius: 50%; width: 18px; height: 18px; display: inline-flex; justify-content: center; align-items: center; font-style: normal; font-size: 0.8rem; }
+        .info-tip .tooltip-text { visibility: hidden; width: 280px; background-color: #333; color: #fff; text-align: left; border-radius: 6px; padding: 10px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -140px; opacity: 0; transition: opacity 0.3s; font-size: 0.85rem; font-weight: normal; }
+        .info-tip:hover .tooltip-text { visibility: visible; opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ZARO</h1>
+    <p class="subtitle">Understanding Finances and Investments</p>
+
+    <fieldset><legend>1. Your Profile</legend>
+         <div class="form-grid">
+            <div><label for="gross_salary">Gross Annual Salary</label><input type="number" id="gross_salary" placeholder="e.g., 2000000"></div>
+            <div><label for="monthly_savings">Average Monthly Savings</label><input type="number" id="monthly_savings" placeholder="e.g., 40000"></div>
+            <div><label for="risk_profile">Your Risk Profile</label>
+                <select id="risk_profile">
+                    <option value="conservative">Conservative</option>
+                    <option value="balanced" selected>Balanced</option>
+                    <option value="aggressive">Aggressive</option>
+                </select>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset><legend>2. Annual Investments & Tax Details</legend>
+        <div class="form-grid">
+            <div><label for="epf">EPF Contribution (Annual)<i class="info-tip">i<span class="tooltip-text">Your mandatory contribution to the Employee Provident Fund. This is part of the 80C limit.</span></i></label><input type="number" id="epf"></div>
+            <div><label for="elss_ppf">ELSS, PPF, Other 80C (Annual)<i class="info-tip">i<span class="tooltip-text">Any other investments you make under the 80C category, like tax-saving funds, PPF, life insurance premiums etc.</span></i></label><input type="number" id="elss_ppf"></div>
+            <div><label for="nps_self">NPS (80CCD1B) (Annual)<i class="info-tip">i<span class="tooltip-text">Voluntary contribution to National Pension System, giving an additional deduction up to ₹50,000.</span></i></label><input type="number" id="nps_self"></div>
+            <div><label for="health_insurance_self">Health Premium (Annual)<i class="info-tip">i<span class="tooltip-text">Premium for medical insurance for yourself/family. Deductible under Section 80D.</span></i></label><input type="number" id="health_insurance_self"></div>
+        </div>
+    </fieldset>
+
+    <button class="main-button" onclick="generateReport()">Generate My Complete Financial Dashboard</button>
+
+    <div id="reportSection">
+        <div id="taxVerdict"></div>
+        <div id="priorityInvestments"></div>
+        
+        <h2>Strategic Wealth Creation Plan</h2>
+        <p style="text-align:center;">This dashboard allocates your <strong>True Investable Surplus</strong> after tax-saving investments.</p>
+        <div class="investment-grid" id="investmentGrid"></div>
+        
+        <!-- FIX 2: Corpus Projection Section Added -->
+        <div id="corpusProjection"></div>
+    </div>
+</div>
+
+<script>
+    const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 });
+
+    function getInvestmentAdvice(category, riskProfile) {
+        const advice = {
+            'Liquidity': { icon: '🛡️', title: 'Liquidity & Emergency', why: 'To build a safety net for unexpected expenses.', example: 'Liquid Mutual Funds.', return: 6 },
+            'Growth': { icon: '🚀', title: 'Growth Engine', return: 12 },
+            'Equity': { icon: '🏢', title: 'Direct Equity', why: 'For higher growth potential through stock ownership.', return: 15 },
+            'Retirement': { icon: '🌱', title: 'Retirement Corpus', why: 'For long-term, tax-shielded compounding.', example: 'VPF or NPS.', return: 8.5 }
+        };
+
+        if (riskProfile === 'aggressive') {
+            advice.Growth = { ...advice.Growth, why: 'Your core wealth driver via high-growth funds.', example: 'Flexi-cap or Mid-cap Funds.', return: 16 };
+        } else if (riskProfile === 'balanced') {
+            advice.Growth = { ...advice.Growth, why: 'Your core wealth engine through market-linked growth.', example: 'Nifty 50 Index or Flexi-cap Funds.', return: 12 };
+        } else { // Conservative
+            advice.Growth = { ...advice.Growth, why: 'For stable growth through large, established companies.', example: 'Nifty 50 Index Funds.', return: 10 };
+        }
+        return advice[category];
+    }
+    
+     function calculateOldTax(taxableIncome) {
+        let tax = 0;
+        const slabs = [[250000, 0.05], [500000, 0.20], [1000000, 0.30]];
+        if (taxableIncome <= 500000) return 0;
+        let remainingIncome = taxableIncome;
+        for (let i = slabs.length - 1; i >= 0; i--) {
+            const [slabStart, rate] = slabs[i];
+            if (remainingIncome > slabStart) {
+                tax += (remainingIncome - slabStart) * rate;
+                remainingIncome = slabStart;
+            }
+        }
+        return tax * 1.04;
+    }
+    
+    function calculateNewTax(taxableIncome) {
+        // Simplified for this tool; real new regime has different slabs
+        return calculateOldTax(taxableIncome);
+    }
+
+
+    function generateReport() {
+        const data = {
+            grossSalary: parseFloat(document.getElementById('gross_salary').value) || 0,
+            monthlySavings: parseFloat(document.getElementById('monthly_savings').value) || 0,
+            epf: parseFloat(document.getElementById('epf').value) || 0,
+            elssPpf: parseFloat(document.getElementById('elss_ppf').value) || 0,
+            npsSelf: parseFloat(document.getElementById('nps_self').value) || 0,
+            healthSelf: parseFloat(document.getElementById('health_insurance_self').value) || 0,
+            riskProfile: document.getElementById('risk_profile').value
+        };
+
+        if (data.grossSalary === 0 || data.monthlySavings === 0) {
+            alert("Please enter both Gross Salary and Monthly Savings.");
+            return;
+        }
+
+        // --- 1. Tax Calculation & Verdict ---
+        const standardDeduction = 50000;
+        const total80c = Math.min(150000, data.epf + data.elssPpf);
+        const deduction80d = Math.min(25000, data.healthSelf);
+        const deductionNpsSelf = Math.min(50000, data.npsSelf);
+        const totalOldRegimeDeductions = standardDeduction + total80c + deduction80d + deductionNpsSelf;
+        const taxOld = calculateOldTax(Math.max(0, data.grossSalary - totalOldRegimeDeductions));
+        const taxNew = calculateNewTax(Math.max(0, data.grossSalary - standardDeduction));
+        
+        const verdictDiv = document.getElementById('taxVerdict');
+        const taxSavings = taxNew - taxOld;
+        verdictDiv.innerHTML = taxSavings > 0 ? `Your Tax Verdict: The <strong>Old Regime</strong> is better, saving you <strong>${formatter.format(taxSavings)}</strong>.` : `Your Tax Verdict: The <strong>New Regime</strong> is better by <strong>${formatter.format(Math.abs(taxSavings))}</strong>.`;
+        verdictDiv.style.backgroundColor = taxSavings > 0 ? '#e8f5e9' : '#e3f2fd';
+        verdictDiv.style.color = taxSavings > 0 ? '#1b5e20' : '#0d47a1';
+
+
+        // --- 2. Priority Tax-Saving Investments ---
+        let priorityHtml = '<h2>Priority 1: Tax-Saving Investments</h2><ul>';
+        let priorityInvestment = 0;
+        const unutilized80c = 150000 - total80c;
+        if (unutilized80c > 0) {
+            priorityInvestment += unutilized80c;
+            priorityHtml += `<li>Fill the <strong>80C gap of ${formatter.format(unutilized80c)}</strong>. Consider ELSS funds for growth or PPF for safety.</li>`;
+        }
+
+        const unutilizedNps = 50000 - data.npsSelf;
+        if (unutilizedNps > 0) {
+            priorityInvestment += unutilizedNps;
+            priorityHtml += `<li>Invest <strong>${formatter.format(unutilizedNps)} in NPS (80CCD1B)</strong> for additional tax benefits.</li>`;
+        }
+
+        if (priorityInvestment === 0) {
+            priorityHtml += '<li>✅ You have fully utilized your key tax-saving sections (80C & NPS). Excellent work!</li>';
+        }
+        priorityHtml += '</ul>'
+        document.getElementById('priorityInvestments').innerHTML = priorityHtml;
+
+        // --- 3. Strategic Wealth Creation Dashboard ---
+        const annualSavings = data.monthlySavings * 12;
+        const investableSurplus = Math.max(0, annualSavings - priorityInvestment);
+        
+        const allocations = {
+            liquidity: investableSurplus * 0.35,
+            growth: investableSurplus * 0.35,
+            equity: investableSurplus * 0.20,
+            retirement: investableSurplus * 0.10,
+        };
+        
+        let gridHtml = '';
+        if (investableSurplus > 0) {
+             for (const key in allocations) {
+                const advice = getInvestmentAdvice(key.charAt(0).toUpperCase() + key.slice(1), data.riskProfile);
+                const monthlyAmount = allocations[key] / 12;
+
+                gridHtml += `
+                    <div class="plan-card ${key}">
+                        <div class="card-header"><span class="card-icon">${advice.icon}</span><h3>${advice.title}</h3></div>
+                        <div class="card-body">
+                            <div class="primary-amount">${formatter.format(monthlyAmount)} / mo</div>
+                            <div class="allocation-percent">${(allocations[key]/investableSurplus * 100).toFixed(0)}% of Surplus (${formatter.format(allocations[key])}/yr)</div>
+                            <p><strong>Why:</strong> ${advice.why}</p>
+                            <p><strong>Action:</strong> Invest monthly. Examples: <strong>${advice.example}</strong></p>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            gridHtml = `<p style="text-align:center; padding: 2rem;">Your savings are fully utilized for tax-saving investments. This is the most efficient first step! Increase your monthly savings to start building a surplus for the market.</p>`;
+        }
+       
+        document.getElementById('investmentGrid').innerHTML = gridHtml;
+        
+        // --- 4. Corpus Projection ---
+        const weightedReturn = ( (getInvestmentAdvice('Liquidity', data.riskProfile).return * 35) + (getInvestmentAdvice('Growth', data.riskProfile).return * 35) + (getInvestmentAdvice('Equity', data.riskProfile).return * 20) + (getInvestmentAdvice('Retirement', data.riskProfile).return * 10) ) / 100;
+        generateCorpusProjection(investableSurplus, weightedReturn);
+        
+        document.getElementById('reportSection').style.display = 'block';
+        window.scrollTo({ top: document.getElementById('taxVerdict').offsetTop - 20, behavior: 'smooth' });
+    }
+    
+    // FIX 2: generateCorpusProjection function added back
+    function generateCorpusProjection(annualInvestment, expectedReturn) {
+        let projectionHtml = '<h2>5-Year Corpus Projection</h2>';
+        if (annualInvestment <= 0) {
+            projectionHtml += '<p style="text-align:center">Investable surplus is zero. Increase your savings to see a projection.</p>';
+            document.getElementById('corpusProjection').innerHTML = projectionHtml;
+            return;
+        }
+
+        const inflationRate = 0.06; // 6%
+        const ltcgRate = 0.10; // 10%
+        
+        let corpus = 0;
+        let chartHtml = '<div class="chart-container">';
+        let yearEndValues = [];
+        
+        for(let i=1; i<=5; i++) {
+            corpus = (corpus + annualInvestment) * (1 + expectedReturn / 100);
+            yearEndValues.push(corpus);
+        }
+        
+        const maxCorpus = Math.max(...yearEndValues, 1);
+        
+        yearEndValues.forEach((val, i) => {
+            const barHeight = Math.max(0, (val / maxCorpus) * 100);
+            chartHtml += `<div class="chart-bar" style="height:${barHeight}%"><div class="value-label">${(val/100000).toFixed(1)}L</div><div class="year-label">Year ${i+1}</div></div>`;
+        });
+        chartHtml += '</div>';
+        
+        const finalCorpus = yearEndValues[4];
+        const inflationAdjustedCorpus = finalCorpus / Math.pow(1 + inflationRate, 5);
+        const postTaxCorpus = finalCorpus - (Math.max(0, (finalCorpus - (annualInvestment * 5)) - 100000) * ltcgRate);
+
+        projectionHtml += chartHtml;
+        projectionHtml += `<p style="text-align:center; margin-top: 2.5rem;">Based on your surplus of <strong>${formatter.format(annualInvestment)}/year</strong> at an expected portfolio return of <strong>${expectedReturn.toFixed(1)}%</strong>:</p><ul>`;
+        projectionHtml += `<li>Projected Corpus in 5 years: <strong>${formatter.format(finalCorpus)}</strong></li>`;
+        projectionHtml += `<li>Value in Today's Money (at 6% inflation): <strong>${formatter.format(inflationAdjustedCorpus)}</strong></li>`;
+        projectionHtml += `<li>After potential 10% Long-Term Capital Gains Tax, your final corpus would be approx. <strong>${formatter.format(postTaxCorpus)}</strong></li></ul>`;
+
+        document.getElementById('corpusProjection').innerHTML = projectionHtml;
+    }
+</script>
+
+</body>
+</html>
